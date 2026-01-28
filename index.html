@@ -1832,7 +1832,7 @@ function init3DModel() {
     const loader = new THREE.GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
 
-    const modelUrl = "https://raw.githubusercontent.com/grunenwaldalexis/Portfolio/6302d58004c04cccd5a75e515c4f55602fb516ec/SupportNFC-Epic.glb";
+    const modelUrl = "./SupportNFC-Epic.glb";
     const fallbackUrl = "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
 
     function loadModel(url, isFallback = false) {
