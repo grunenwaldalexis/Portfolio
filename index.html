@@ -1770,118 +1770,105 @@ let isInit3d = false;
 
 function init3DModel() {
     if (isInit3d) return;
-    
+
     const canvas = document.getElementById('canvas3d');
     if (!canvas) return;
-    
+
     const canvasRect = canvas.getBoundingClientRect();
     if (canvasRect.width === 0 || canvasRect.height === 0) return;
-    
+
     scene3d = new THREE.Scene();
     scene3d.background = new THREE.Color(0x0a0a15);
-    
-    camera3d = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
-    camera3d.position.set(0, 2, 8);
-    camera3d.lookAt(0, 0, 0);
-    
+
+    camera3d = new THREE.PerspectiveCamera(
+        50,
+        canvasRect.width / canvasRect.height,
+        0.1,
+        1000
+    );
+
     renderer3d = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
     renderer3d.setSize(canvasRect.width, canvasRect.height);
     renderer3d.setPixelRatio(window.devicePixelRatio);
     renderer3d.shadowMap.enabled = true;
     renderer3d.outputEncoding = THREE.sRGBEncoding;
-    
-    // Improved Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene3d.add(ambientLight);
-    
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-    scene3d.add(hemiLight);
-    
+
+    // Lights
+    scene3d.add(new THREE.AmbientLight(0xffffff, 0.5));
+    scene3d.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.0));
+
     const mainLight = new THREE.DirectionalLight(0xffffff, 1);
     mainLight.position.set(5, 10, 7);
     mainLight.castShadow = true;
     scene3d.add(mainLight);
-    
+
     const pointLight1 = new THREE.PointLight(0xa40000, 2, 50);
     pointLight1.position.set(-5, 3, 5);
     scene3d.add(pointLight1);
-    
+
     const pointLight2 = new THREE.PointLight(0x4444ff, 1, 50);
     pointLight2.position.set(5, -3, -5);
     scene3d.add(pointLight2);
-    
-    const tempGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const tempMaterial = new THREE.MeshStandardMaterial({ color: 0xa40000 });
-    const tempCube = new THREE.Mesh(tempGeometry, tempMaterial);
+
+    // Temp cube while loading
+    const tempCube = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color: 0xa40000 })
+    );
     scene3d.add(tempCube);
-    
+
     function animate() {
         animationId = requestAnimationFrame(animate);
-        if (model3d) {
-            model3d.rotation.y += 0.005;
-        } else if (tempCube) {
-            tempCube.rotation.x += 0.01;
-            tempCube.rotation.y += 0.01;
-        }
+        if (model3d) model3d.rotation.y += 0.005;
+        else tempCube.rotation.x += 0.01, tempCube.rotation.y += 0.01;
         renderer3d.render(scene3d, camera3d);
     }
     animate();
-    
-    // DRIAC DECODER CONFIG
+
+    // DRACO
     const dracoLoader = new THREE.DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-    
+
     const loader = new THREE.GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
-    
+
     const modelUrl = "https://raw.githubusercontent.com/grunenwaldalexis/Portfolio/6302d58004c04cccd5a75e515c4f55602fb516ec/SupportNFC-Epic.glb";
     const fallbackUrl = "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
 
     function loadModel(url, isFallback = false) {
         loader.load(
             url,
-            function(gltf) {
-                console.log(isFallback ? "Demo model loaded successfully" : "3D model loaded successfully");
+            function (gltf) {
                 if (tempCube) scene3d.remove(tempCube);
-                
                 model3d = gltf.scene;
-                
-                // Auto centering & scaling
+
                 const box = new THREE.Box3().setFromObject(model3d);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
-                
-                model3d.position.x += (model3d.position.x - center.x);
-                model3d.position.y += (model3d.position.y - center.y);
-                model3d.position.z += (model3d.position.z - center.z);
-                
+
+                model3d.position.sub(center);
+
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const targetScale = isFallback ? 2.5 : 4.5;
                 const scale = targetScale / maxDim;
                 model3d.scale.setScalar(scale);
-                
+
+                const distance = maxDim * 1.8;
+                camera3d.position.set(0, maxDim * 0.6, distance);
+                camera3d.lookAt(0, 0, 0);
+
                 scene3d.add(model3d);
             },
-            function(xhr) {
-                if (xhr.total > 0) console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-            },
-            function(error) {
-                if (!isFallback) {
-                    console.warn("Local model not found or CORS error, trying demo fallback...");
-                    loadModel(fallbackUrl, true);
-                } else {
-                    console.error("Critical 3D error:", error);
-                    const errorMessage = document.createElement('div');
-                    errorMessage.className = 'absolute inset-0 flex items-center justify-center text-red-500 text-xs text-center p-4 bg-black/60';
-                    errorMessage.innerHTML = 'Erreur de chargement du modèle 3D.<br/>Vérifiez votre connexion.';
-                    canvas.parentElement.appendChild(errorMessage);
-                }
+            undefined,
+            function (error) {
+                if (!isFallback) loadModel(fallbackUrl, true);
+                else console.error("3D loading error:", error);
             }
         );
     }
 
     loadModel(modelUrl);
-    
+
     const resizeObserver = new ResizeObserver(entries => {
         for (let entry of entries) {
             const width = entry.contentRect.width;
@@ -1894,7 +1881,7 @@ function init3DModel() {
         }
     });
     resizeObserver.observe(canvas);
-    
+
     isInit3d = true;
 }
 
