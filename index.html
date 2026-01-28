@@ -1787,17 +1787,25 @@ function init3DModel() {
         0.1,
         1000
     );
+    camera3d.position.set(0, 2, 8);
 
     // === Renderer ===
-    renderer3d = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    renderer3d = new THREE.WebGLRenderer({ 
+        canvas: canvas, 
+        antialias: true, 
+        alpha: false 
+    });
     renderer3d.setPixelRatio(window.devicePixelRatio);
-    renderer3d.setSize(canvasRect.width, canvasRect.height, false);
+    renderer3d.setSize(canvasRect.width, canvasRect.height);
     renderer3d.shadowMap.enabled = true;
     renderer3d.outputEncoding = THREE.sRGBEncoding;
 
     // === Lights ===
-    scene3d.add(new THREE.AmbientLight(0xffffff, 0.5));
-    scene3d.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.0));
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene3d.add(ambientLight);
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+    scene3d.add(hemiLight);
 
     const mainLight = new THREE.DirectionalLight(0xffffff, 1);
     mainLight.position.set(5, 10, 7);
@@ -1813,17 +1821,22 @@ function init3DModel() {
     scene3d.add(pointLight2);
 
     // === Temp cube while loading ===
-    const tempCube = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshStandardMaterial({ color: 0xa40000 })
-    );
+    const tempGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const tempMaterial = new THREE.MeshStandardMaterial({ color: 0xa40000 });
+    const tempCube = new THREE.Mesh(tempGeometry, tempMaterial);
     scene3d.add(tempCube);
 
     // === Animation loop ===
     function animate() {
         animationId = requestAnimationFrame(animate);
-        if (model3d) model3d.rotation.y += 0.005;
-        else tempCube.rotation.x += 0.01, tempCube.rotation.y += 0.01;
+        
+        if (model3d) {
+            model3d.rotation.y += 0.005;
+        } else if (tempCube) {
+            tempCube.rotation.x += 0.01;
+            tempCube.rotation.y += 0.01;
+        }
+        
         renderer3d.render(scene3d, camera3d);
     }
     animate();
@@ -1843,66 +1856,96 @@ function init3DModel() {
         loader.load(
             url,
             function (gltf) {
-                if (tempCube) scene3d.remove(tempCube);
+                console.log(isFallback ? "Fallback model loaded" : "3D model loaded successfully");
+                
+                // Retirer le cube temporaire
+                if (tempCube) {
+                    scene3d.remove(tempCube);
+                }
 
                 model3d = gltf.scene;
-                scene3d.add(model3d);
 
-                // 📦 Bounding box initiale
+                // 📦 Calcul de la bounding box
                 const box = new THREE.Box3().setFromObject(model3d);
                 const size = box.getSize(new THREE.Vector3());
                 const center = box.getCenter(new THREE.Vector3());
 
-                // 🎯 Recentrage
-                model3d.position.sub(center);
+                // 🎯 Centrer le modèle à l'origine
+                model3d.position.x = -center.x;
+                model3d.position.y = -center.y;
+                model3d.position.z = -center.z;
 
-                // 🔍 Dimension max
+                // 🔍 Dimension maximale
                 const maxDim = Math.max(size.x, size.y, size.z);
 
-                // 🎚️ Scale forcé
-                const scale = 8 / maxDim;
+                // 🎚️ Scale pour adapter au viewport
+                const targetScale = isFallback ? 2.5 : 4.5;
+                const scale = targetScale / maxDim;
                 model3d.scale.setScalar(scale);
 
-                // 🔁 Recalcul box après scale
-                const boxScaled = new THREE.Box3().setFromObject(model3d);
-                const sizeScaled = boxScaled.getSize(new THREE.Vector3());
-                const maxDimScaled = Math.max(sizeScaled.x, sizeScaled.y, sizeScaled.z);
-
-                // 📷 Camera auto-fit
+                // 📷 Ajuster la caméra
                 const fov = camera3d.fov * (Math.PI / 180);
-                let cameraZ = Math.abs((maxDimScaled / 2) / Math.tan(fov / 2));
-                cameraZ *= 2.2;
+                const scaledMaxDim = maxDim * scale;
+                let cameraZ = Math.abs((scaledMaxDim / 2) / Math.tan(fov / 2));
+                cameraZ *= 1.8; // Facteur de distance
 
-                camera3d.position.set(0, maxDimScaled * 0.4, cameraZ);
-                camera3d.near = cameraZ / 100;
-                camera3d.far = cameraZ * 100;
-                camera3d.updateProjectionMatrix();
+                camera3d.position.set(0, scaledMaxDim * 0.3, cameraZ);
                 camera3d.lookAt(0, 0, 0);
+                camera3d.updateProjectionMatrix();
 
-                console.log(isFallback ? "Fallback model loaded" : "3D model loaded");
+                // Ajouter le modèle à la scène
+                scene3d.add(model3d);
             },
-            undefined,
+            function (xhr) {
+                if (xhr.total > 0) {
+                    const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
+                    console.log(`Loading 3D model: ${percent}%`);
+                }
+            },
             function (error) {
-                if (!isFallback) loadModel(fallbackUrl, true);
-                else console.error("3D loading error:", error);
+                if (!isFallback) {
+                    console.warn("Local model not found, loading fallback...");
+                    loadModel(fallbackUrl, true);
+                } else {
+                    console.error("Critical 3D loading error:", error);
+                    
+                    // Afficher un message d'erreur à l'utilisateur
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'absolute inset-0 flex items-center justify-center text-red-500 text-xs text-center p-4 bg-black/60 rounded-xl';
+                    errorDiv.innerHTML = 'Erreur de chargement du modèle 3D.<br/>Vérifiez votre connexion.';
+                    canvas.parentElement.appendChild(errorDiv);
+                }
             }
         );
     }
 
     loadModel(modelUrl);
 
-    // === Resize observer ===
+    // === Resize handler ===
     function onResize() {
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
 
-        camera3d.aspect = width / height;
-        camera3d.updateProjectionMatrix();
-        renderer3d.setSize(width, height, false);
+        if (width > 0 && height > 0) {
+            camera3d.aspect = width / height;
+            camera3d.updateProjectionMatrix();
+            renderer3d.setSize(width, height);
+        }
     }
 
-    window.addEventListener('resize', onResize);
-    onResize();
+    // ResizeObserver pour détecter les changements de taille
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            const width = entry.contentRect.width;
+            const height = entry.contentRect.height;
+            if (width > 0 && height > 0) {
+                camera3d.aspect = width / height;
+                camera3d.updateProjectionMatrix();
+                renderer3d.setSize(width, height);
+            }
+        }
+    });
+    resizeObserver.observe(canvas);
 
     isInit3d = true;
 }
