@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Alexis Grunenwald - Portfolio</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;900&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#a40000",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#020205",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-nav {
+                background: rgba(26, 26, 30, 0.8);
+                backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .glass-abstract-1 {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01));
+                backdrop-filter: blur(30px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+                box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05);
+                transform: rotate(-15deg);
+            }
+            .glass-abstract-2 {
+                background: linear-gradient(225deg, rgba(19, 19, 236, 0.1), rgba(255, 255, 255, 0.02));
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+                transform: rotate(25deg);
+            }
+            .glow-mesh {
+                background: radial-gradient(circle at 50% 50%, rgba(19, 19, 236, 0.25) 0%, transparent 60%);
+                filter: blur(60px);
+            }
+            .cta-border {
+                position: relative;
+                background: linear-gradient(black, black) padding-box,
+                            linear-gradient(45deg, rgba(255,255,255,0.1), #1313ec, rgba(255,255,255,0.1)) border-box;
+                border: 1px solid transparent;
+            }
+            .apple-text-gradient {
+                background: linear-gradient(to bottom right, #ffffff 30%, #a1a1aa 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .glass-card {
+                background: rgba(20, 20, 20, 0.6);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .cinematic-glow {
+                background: radial-gradient(circle at 50% 30%, rgba(164, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+                mix-blend-mode: plus-lighter;
+            }
+            .studio-bg {
+                background: radial-gradient(circle at 50% -10%, #1a1a1e 0%, #020205 80%);
+            }
+            .glow-blue {
+                box-shadow: 0 0 20px rgba(19, 19, 236, 0.3);
+            }
+        }
+
+        body {
+            @apply studio-bg min-h-screen overflow-x-hidden pb-[50px];
+            overscroll-behavior: none;
+        }
+
+        .page {
+            @apply studio-bg absolute inset-0 w-full opacity-0 z-10;
+            height: auto;
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                        opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .page.active {
+            @apply opacity-100 translate-x-0 pointer-events-auto relative z-20;
+        }
+    </style>
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .page.exit-left {
+            transform: translateX(-100%);
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .page.exit-right {
+            transform: translateX(100%);
+            opacity: 0;
+            z-index: 10;
+        }
+
+        /* Popup styles */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .popup-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .popup-content {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Infinite scroll animation */
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        .animate-scroll {
+            animation: scroll 30s linear infinite;
+        }
+        
+        .software-track {
+            display: flex;
+            width: max-content;
+        }
+        
+        .software-item {
+            flex-shrink: 0;
+            width: 120px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* Video carousel */
+        .video-slider {
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .video-slide {
+            scroll-snap-align: center;
+        }
+
+        /* Image carousel for stories */
+        @keyframes carouselSlide {
+            0%, 20% { transform: translateX(0); }
+            25%, 45% { transform: translateX(-20%); }
+            50%, 70% { transform: translateX(-40%); }
+            75%, 95% { transform: translateX(-60%); }
+            100% { transform: translateX(-80%); }
+        }
+        .carousel-track {
+            animation: carouselSlide 16s ease-in-out infinite;
+        }
+
+        /* 3D Canvas */
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            border-radius: 1rem;
+        }
+
+        /* Spinner */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #a40000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Hover effects */
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(164, 0, 0, 0.2);
+        }
+        
+        .hover-lift:active {
+            transform: translateY(-2px);
+        }
+
+        /* Category content transitions */
+        .category-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+        }
+        .category-content.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+        }
+
+        /* Chip active state */
+        .chip {
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .chip.active {
+            background: #a40000;
+        }
+        .chip.active .chip-text {
+            color: white;
+        }
+        .chip.active .chip-icon {
+            color: white;
+        }
+
+        /* Bottom nav highlight */
+        .bottom-nav-item {
+            transition: all 0.3s ease;
+        }
+        .bottom-nav-item.active {
+            color: white;
+        }
+        .bottom-nav-item.active .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        /* Scrollytelling Styles (Match scrolling.html 100%) */
+        .scrolly-scroll-container {
+            height: 300vh;
+            position: relative;
+        }
+
+        .scrolly-vinyl-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100vh;
+            height: 100vh;
+            background: radial-gradient(circle, #151515 0%, #050505 80%);
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.2;
+            animation: scrolly-spin 30s linear infinite;
+        }
+
+        @keyframes scrolly-spin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .scrolly-canvas-container {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: flex-start; /* Changé de center à flex-start */
+            justify-content: center;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        #scrolly-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top; /* Force l'alignement en haut */
+        }
+
+        .scrolly-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 5vw;
+            padding-top: 22vh; /* Increased from 22vh */
+        }
+
+        .text-beat {
+            position: absolute;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            text-align: center;
+            max-width: 800px;
+        }
+
+        #beat-25 {
+            padding-top: 8vh;
+        }
+
+        #beat-60 {
+            padding-top: 28vh;
+        }
+
+        .text-beat.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .text-beat h1 {
+            font-size: clamp(2.5rem, 10vw, 6rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.04em;
+            line-height: 0.85;
+            margin-bottom: 1.5rem;
+            color: #fff;
+        }
+
+        .text-beat p {
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            opacity: 0.9;
+            font-weight: 300;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Essential Positions from scrolling.html */
+        .beat-left { text-align: left; left: 10vw; align-items: flex-start; }
+        .beat-right { text-align: right; right: 10vw; align-items: flex-end; }
+        .beat-center { text-align: center; }
+
+        #scrolly-loader {
+            position: fixed;
+            inset: 0;
+            background: #020205;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        .scrolly-progress-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            z-index: 50;
+            background: rgba(255,255,255,0.05);
+        }
+        #scrolly-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #fff;
+            transition: width 0.1s linear;
+        }
+
+        /* Luxury Scroll Indicator */
+        .luxury-scroll {
+            margin-top: 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            transition: opacity 1s ease;
+        }
+
+        .scroll-mouse {
+            width: 22px;
+            height: 38px;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .scroll-wheel {
+            width: 2px;
+            height: 8px;
+            background: #fff;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 8px;
+            border-radius: 2px;
+            animation: scroll-wheel-anim 2s infinite;
+        }
+
+        .scroll-line {
+            width: 1px;
+            height: 60px;
+            background: linear-gradient(to bottom, #fff, transparent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scroll-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #fff, transparent);
+            animation: scroll-line-anim 2s infinite;
+        }
+
+        @keyframes scroll-wheel-anim {
+            0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+            100% { transform: translateX(-50%) translateY(12px); opacity: 0; }
+        }
+
+        @keyframes scroll-line-anim {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Mobile Adjustments from scrolling.html */
+        @media (max-width: 768px) {
+            .text-beat {
+                left: 5vw !important;
+                right: 5vw !important;
+                text-align: center !important;
+                width: 90vw;
+                align-items: center;
+            }
+            #beat-25,
+            #beat-60 {
+                padding-top: 0;
+            }
+            .text-beat h1 { font-size: 3rem; }
+            .scrolly-overlay {
+                padding-top: 35vh;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark font-display text-white overflow-x-hidden">
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page active">
+    <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 glass-nav">
+        <div class="flex items-center gap-3">
+            <div class="size-2 bg-primary rounded-full shadow-[0_0_10px_rgba(19,19,236,0.8)]"></div>
+            <span class="text-white text-sm font-semibold tracking-widest uppercase">AG</span>
+        </div>
+        <button class="flex items-center justify-center rounded-lg h-10 w-10 bg-white/5 text-white hover:bg-white/10 transition-colors">
+            <span class="material-symbols-outlined text-xl">share</span>
+        </button>
+    </nav>
+
+    <!-- Scrollytelling Loader -->
+    <!-- Scrollytelling Loader (Match scrolling.html 100%) -->
+    <div id="scrolly-loader">
+        <div class="spinner"></div>
+        <div id="loader-text">Initializing sequence... 0%</div>
+    </div>
+
+    <!-- Scrollytelling Progress Bar -->
+    <div class="scrolly-progress-container">
+        <div id="scrolly-progress-bar"></div>
+    </div>
+
+    <!-- Scrollytelling Main Section -->
+    <div class="scrolly-scroll-container">
+        <div class="scrolly-canvas-container">
+            <!-- Scrollytelling Background -->
+            <div class="scrolly-vinyl-bg"></div>
+            <canvas id="scrolly-canvas"></canvas>
+
+            <div class="scrolly-overlay">
+                <!-- 0% Scroll Beat -->
+                <div class="text-beat beat-center" id="beat-0">
+                    <h1>Alexis Grunenwald</h1>
+                    <p>Bienvenue sur mon portfolio</p>
+                    
+                    <!-- Luxury Scroll Indicator -->
+                    <div class="luxury-scroll">
+                        <div class="scroll-mouse">
+                            <div class="scroll-wheel"></div>
+                        </div>
+                        <div class="scroll-line"></div>
+                    </div>
+                </div>
+
+                <!-- 25% Scroll Beat -->
+                <div class="text-beat beat-left" id="beat-25">
+                    <h1>Mon Objectif</h1>
+                    <p>Je souhaite intégrer une équipe pour participer à des projets créatifs et innovants, tout en poursuivant ma formation pratique de télépilote drone (STS-01 / STS-02).</p>
+                </div>
+
+                <!-- 60% Scroll Beat -->
+                <div class="text-beat beat-right" id="beat-60">
+                    <h1>À découvrir</h1>
+                    <p>Quelques-unes de mes créations ainsi que toutes les informations me concernant : mon CV, mes coordonnées, mes compétences et les logiciels que j’utilise.</p>
+                </div>
+
+                <!-- 90% Scroll Beat -->
+                <div class="text-beat beat-center" id="beat-90">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="relative z-10 px-6 pt-4 pb-20">
+        <div class="max-w-4xl mx-auto mb-12 text-center">
+            <p class="text-slate-400 text-sm leading-relaxed font-light">
+                Cette introduction interactive est propulsée par une séquence d'images HD synchronisée au défilement via Motion.<br class="hidden md:block"/>
+                Un mélange de technique audiovisuelle / 3D et de code pour une immersion fluide dès l'ouverture.
+            </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div onclick="navigateToPage('portfolio')" class="group p-8 rounded-3xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md transition-all hover:bg-white/[0.05] cursor-pointer">
+                <div class="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 mb-6 transition-transform group-hover:scale-110">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 28px; font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                </div>
+                <h3 class="text-white text-xl font-bold mb-3">MES CRÉATIONS ⇲</h3>
+                <p class="text-slate-400 text-sm leading-relaxed font-light">
+                    Découvrez quelques-unes de mes réalisations : Audiovisuel, développement web, création de contenu, etc...
+                </p>
+            </div>
+
+            <div onclick="navigateToPage('info')" class="group p-8 rounded-3xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md transition-all hover:bg-white/[0.05] cursor-pointer">
+                <div class="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 mb-6 transition-transform group-hover:scale-110">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 28px; font-variation-settings: 'FILL' 1;">diversity_3</span>
+                </div>
+                <h3 class="text-white text-xl font-bold mb-3">CONTACT & INFORMATIONS ⇲</h3>
+                <p class="text-slate-400 text-sm leading-relaxed font-light">
+                    Retrouvez ci-dessous la liste de mes logiciels, mon CV & informations de contact.
+                </p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- PORTFOLIO PAGE -->
+<div id="page-portfolio" class="page" style="display: none;">    
+    <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 glass-nav">
+        <div class="flex size-12 shrink-0 items-center justify-start">
+            <span class="material-symbols-outlined cursor-pointer text-2xl" onclick="navigateToPage('home')">arrow_back_ios</span>
+        </div>
+        <div class="flex flex-col items-center flex-1">
+            <h2 class="text-white text-sm font-semibold tracking-tight">Alexis Grunenwald</h2>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Portfolio</p>
+        </div>
+        <div class="flex w-12 items-center justify-end">
+            <button class="flex items-center justify-center rounded-lg h-10 w-10 bg-white/5 text-white hover:bg-white/10 transition-colors">
+                <span class="material-symbols-outlined text-xl">share</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto pb-20 pt-20">
+        <header class="px-6 pt-8 pb-4">
+            <h1 class="text-white tracking-tight text-4xl font-bold leading-tight text-left">
+                AUDIOVISUEL & <br/>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">CRÉATION DE CONTENU</span>
+            </h1>
+            <p class="mt-3 text-slate-400 text-sm leading-relaxed max-w-[85%]">
+                Exemple d'un logo 3D avec intégration de vidéo dans les lettres. (créé avec Blender)
+            </p>
+        </header>
+
+        <section class="w-full px-6 pb-6">
+            <div class="relative group w-full">
+                <div class="absolute -inset-0.5 bg-gradient-to-br from-primary/40 to-transparent rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
+                <div class="relative w-full aspect-video bg-[#0a0a15] overflow-hidden border border-white/10 shadow-2xl rounded-xl">
+                    <video id="videoEpic" class="w-full h-auto" preload="metadata" playsinline webkit-playsinline>
+                        <source src="https://epicview.fr/wp-content/uploads/2025/10/Logo3D-EPICVIEW.mp4" type="video/mp4">
+                        Votre navigateur ne supporte pas la vidéo.
+                    </video>
+                    <button id="playButton" class="absolute inset-0 m-auto flex items-center justify-center rounded-full w-16 h-16 bg-primary/90 text-white glow-blue hover:scale-105 transition-transform z-10">
+                        <span class="material-symbols-outlined text-3xl">play_arrow</span>
+                    </button>
+                    <div class="absolute top-3 right-3 flex gap-2 z-10">
+                        <span class="px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[9px] font-bold text-white border border-white/10">4K HDR</span>
+                        <span class="px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[9px] font-bold text-white border border-white/10">24 FPS</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-4 top-[88px] z-40 pb-3">
+            <div class="flex gap-3 px-6 overflow-x-auto no-scrollbar pb-2">
+                <div class="chip active flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass-card px-5 hover:bg-white/10 transition-all cursor-pointer" data-category="audiovisuel">
+                    <span class="material-symbols-outlined text-sm chip-icon">auto_awesome</span>
+                    <p class="text-slate-300 text-xs font-semibold chip-text">Audiovisuel</p>
+                </div>
+                <div class="chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass-card px-5 hover:bg-white/10 transition-all cursor-pointer" data-category="contenu">
+                    <span class="material-symbols-outlined text-sm chip-icon text-slate-300">movie</span>
+                    <p class="text-slate-300 text-xs font-medium chip-text">Création de contenu</p>
+                </div>
+                <div class="chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass-card px-5 hover:bg-white/10 transition-all cursor-pointer" data-category="web">
+                    <span class="material-symbols-outlined text-sm chip-icon text-slate-300">code</span>
+                    <p class="text-slate-300 text-xs font-medium chip-text">Développement Web</p>
+                </div>
+                <div class="chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full glass-card px-5 hover:bg-white/10 transition-all cursor-pointer" data-category="3d">
+                    <span class="material-symbols-outlined text-sm chip-icon text-slate-300">view_in_ar</span>
+                    <p class="text-slate-300 text-xs font-medium chip-text">Projets 3D</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="relative">
+            <!-- Audiovisuel Section -->
+            <section id="audiovisuel-content" class="category-content active px-6 mt-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div onclick="openVideoPopup('portrait')" 
+                        class="group cursor-pointer relative bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] border border-white/5 overflow-hidden hover-lift" 
+                        style='background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 60%), url("https://epicview.fr/wp-content/uploads/2025/05/Short-Production.jpg");'>
+                        <div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-4xl text-black">play_arrow</span>
+                            </div>
+                        </div>
+                        <p class="text-white text-sm font-bold leading-tight line-clamp-2">Format portrait</p>
+                        <div class="flex items-center gap-1.5 opacity-60">
+                            <span class="material-symbols-outlined text-[12px]">category</span>
+                            <span class="text-[10px] uppercase tracking-tighter">réels instagram • 16 vidéos</span>
+                        </div>
+                    </div>
+
+                    <div onclick="openVideoPopup('paysage')" 
+                        class="group cursor-pointer relative bg-cover bg-center flex flex-col gap-3 rounded-xl justify-end p-4 aspect-[3/4] border border-white/5 overflow-hidden hover-lift" 
+                        style='background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 60%), url("https://epicview.fr/wp-content/uploads/2025/06/Content-Design.jpg");'>
+                        <div class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-4xl text-black">play_arrow</span>
+                            </div>
+                        </div>
+                        <p class="text-white text-sm font-bold leading-tight line-clamp-2">Format paysage</p>
+                        <div class="flex items-center gap-1.5 opacity-60">
+                            <span class="material-symbols-outlined text-[12px]">movie_edit</span>
+                            <span class="text-[10px] uppercase tracking-tighter">Publicités • 5 vidéos</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Création de contenu Section -->
+            <section id="contenu-content" class="category-content px-6 mt-6" style="display: none;">
+                <h3 class="text-white text-lg font-semibold mb-4">Publications Instagram</h3>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div onclick="openImageGallery('posts', 0)" class="relative aspect-[4/5] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer group">
+                        <img src="https://i.imgur.com/xR8pPZI.jpeg" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Post Instagram 1"/>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <div onclick="openImageGallery('posts', 1)" class="relative aspect-[4/5] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer group">
+                        <img src="https://i.imgur.com/iJUeP8k.jpeg" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Post Instagram 2"/>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <div onclick="openImageGallery('posts', 2)" class="relative aspect-[4/5] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer group">
+                        <img src="https://i.imgur.com/3CbthiI.jpeg" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Post Instagram 3"/>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <div onclick="openImageGallery('posts', 3)" class="relative aspect-[4/5] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer group">
+                        <img src="https://i.imgur.com/b1k1Y2O.jpeg" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Post Instagram 4"/>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                </div>
+
+                <h3 class="text-white text-lg font-semibold mb-4">Stories Instagram</h3>
+                <div class="flex gap-3 overflow-x-auto no-scrollbar pb-4">
+                    <div onclick="openImageGallery('stories', 0)" class="relative min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 group cursor-pointer">
+                        <div class="flex w-[500%] h-full carousel-track">
+                            <div class="w-1/5 h-full"><img src="https://i.imgur.com/Wcfkawe.jpeg" class="w-full h-full object-cover" alt="Carousel 1"/></div>
+                            <div class="w-1/5 h-full"><img src="https://i.imgur.com/6bM57XT.jpeg" class="w-full h-full object-cover" alt="Carousel 2"/></div>
+                            <div class="w-1/5 h-full"><img src="https://i.imgur.com/ou2TDA7.jpeg" class="w-full h-full object-cover" alt="Carousel 3"/></div>
+                            <div class="w-1/5 h-full"><img src="https://i.imgur.com/PhNXH0o.jpeg" class="w-full h-full object-cover" alt="Carousel 4"/></div>
+                            <div class="w-1/5 h-full"><img src="https://i.imgur.com/Wcfkawe.jpeg" class="w-full h-full object-cover" alt="Carousel 1 (Clone)"/></div>
+                        </div>
+                        <div class="absolute top-2 left-2 right-2 flex gap-1">
+                            <div class="flex-1 h-0.5 bg-white/50 rounded"></div>
+                            <div class="flex-1 h-0.5 bg-white/50 rounded"></div>
+                            <div class="flex-1 h-0.5 bg-white/50 rounded"></div>
+                            <div class="flex-1 h-0.5 bg-white/50 rounded"></div>
+                        </div>
+                        <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full text-[9px] text-white">CARROUSEL</div>
+                    </div>
+                    <div onclick="openImageGallery('stories', 1)" class="min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer"><img src="https://i.imgur.com/zt6PvAT.jpeg" class="w-full h-full object-cover" alt="Story 2"/></div>
+                    <div onclick="openImageGallery('stories', 2)" class="min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer"><img src="https://i.imgur.com/KaQN2sn.jpeg" class="w-full h-full object-cover" alt="Story 3"/></div>
+                    <div onclick="openImageGallery('stories', 3)" class="min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer"><img src="https://i.imgur.com/XJGUVpF.jpeg" class="w-full h-full object-cover" alt="Story 4"/></div>
+                    <div onclick="openImageGallery('stories', 4)" class="min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer"><img src="https://i.imgur.com/qHbFTo0.jpeg" class="w-full h-full object-cover" alt="Story 5"/></div>
+                    <div onclick="openImageGallery('stories', 5)" class="min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer"><img src="https://i.imgur.com/zHG8RYG.jpeg" class="w-full h-full object-cover" alt="Story 6"/></div>
+                    <div onclick="openImageGallery('stories', 6)" class="min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer"><img src="https://i.imgur.com/AiTWZcu.jpeg" class="w-full h-full object-cover" alt="Story 7"/></div>
+                    <div onclick="openImageGallery('stories', 7)" class="min-w-[140px] aspect-[9/16] rounded-xl overflow-hidden border border-white/10 hover-lift cursor-pointer"><img src="https://i.imgur.com/ruYYYG4.jpeg" class="w-full h-full object-cover" alt="Story 8"/></div>
+                </div>
+            </section>
+
+            <!-- Développement Web Section -->
+            <section id="web-content" class="category-content px-6 mt-6" style="display: none;">
+                <div class="space-y-4">
+                    <div class="glass-card rounded-xl p-6 hover-lift cursor-pointer group">
+                        <div class="flex items-start justify-between mb-3">
+                            <a href="https://epicview.fr/" target="_blank">
+                            <div class="flex-1">
+                                <h3 class="text-white text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Site Web</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed">Réalisation d'un site web (wordpress/elementor)</p>
+                            </div>
+                            </a>
+                            <span class="material-symbols-outlined text-primary text-2xl">arrow_forward</span>
+                        </div>
+                        <div class="flex gap-2 flex-wrap mt-4">
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">HTML5</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">JavaScript</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">CSS</span>
+                        </div>
+                        <a href="https://epicview.fr" target="_blank" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                            Voir le projet <span class="material-symbols-outlined text-base">open_in_new</span>
+                        </a>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6 hover-lift cursor-pointer group">
+                        <div class="flex items-start justify-between mb-3">
+                            <a href="https://bar-le-charleston.fr" target="_blank">
+                            <div class="flex-1">
+                                <h3 class="text-white text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Carte des boissons</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed">Création d'une carte des boissons pour un bar.</p>
+                            </div>
+                            </a>
+                            <span class="material-symbols-outlined text-primary text-2xl">arrow_forward</span>
+                        </div>
+                        <div class="flex gap-2 flex-wrap mt-4">
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Canva Pro</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Vidéo</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Caméra DJI Ronin 4D</span>
+                        </div>
+                        <a href="https://bar-le-charleston.fr" target="_blank" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                            Voir le projet <span class="material-symbols-outlined text-base">open_in_new</span>
+                        </a>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6 hover-lift cursor-pointer group">
+                        <div class="flex items-start justify-between mb-3">
+                            <a href="https://epicview.fr/webapp" target="_blank">
+                            <div class="flex-1">
+                                <h3 class="text-white text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Web APP</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed">Web App interactive & responsive pour un logement locatif.</p>
+                            </div>
+                            </a>
+                            <span class="material-symbols-outlined text-primary text-2xl">arrow_forward</span>
+                        </div>
+                        <div class="flex gap-2 flex-wrap mt-4">
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">HTML5</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">JavaScript</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Tailwind CSS</span>
+                        </div>
+                        <a href="https://epicview.fr/webapp" target="_blank" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                            Voir le projet <span class="material-symbols-outlined text-base">open_in_new</span>
+                        </a>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6 hover-lift cursor-pointer group">
+                        <div class="flex items-start justify-between mb-3">
+                            <a href="https://epicview.fr/catalogue-des-services-2026/" target="_blank">
+                            <div class="flex-1">
+                                <h3 class="text-white text-lg font-semibold mb-2 group-hover:text-primary transition-colors">FlipBook</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed">Création d'un flipbook interactif.</p>
+                            </div>
+                            </a>
+                            <span class="material-symbols-outlined text-primary text-2xl">arrow_forward</span>
+                        </div>
+                        <div class="flex gap-2 flex-wrap mt-4">
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">HTML5</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">CSS</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">JavaScript</span>
+                        </div>
+                        <a href="https://epicview.fr/catalogue-des-services-2026/" target="_blank" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                            Voir le projet <span class="material-symbols-outlined text-base">open_in_new</span>
+                        </a>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6 hover-lift cursor-pointer group">
+                        <div class="flex items-start justify-between mb-3">
+                            <a href="https://epicview.fr/alexis-grunenwald-nfc/" target="_blank">
+                            <div class="flex-1">
+                                <h3 class="text-white text-lg font-semibold mb-2 group-hover:text-primary transition-colors">Carte de Visite NFC</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed">Carte de visite hébergée sur un site web. (URL intégrée dans une carte NFC)</p>
+                            </div>
+                            <span class="material-symbols-outlined text-primary text-2xl">arrow_forward</span>
+                        </div>
+                        <div class="flex gap-2 flex-wrap mt-4">
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Wordpress</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Elementor</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Encodage NFC</span>
+                        </div>
+                        <a href="https://epicview.fr/alexis-grunenwald-nfc/" target="_blank" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                            Voir le projet <span class="material-symbols-outlined text-base">open_in_new</span>
+                        </a>
+                    </div>
+                    <div class="glass-card rounded-xl p-6 hover-lift cursor-pointer group">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <h3 class="text-white text-lg font-semibold mb-2">Visite virtuelle 3D interactive</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed">Création en cours...</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 flex-wrap mt-4">
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Caméra 360°</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">Marzipano</span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full text-xs text-white/70">JavaScript</span>
+                        </div>
+                        <p class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                            En cours
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projets 3D Section -->
+            <section id="3d-content" class="category-content px-6 mt-6" style="display: none;">
+                <h3 class="text-white text-lg font-semibold mb-4">Modèle 3D Interactif</h3>
+                <div class="glass-card rounded-xl p-6">
+                    <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-black">
+                        <canvas id="canvas3d"></canvas>
+                        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-center">
+                            <div class="bg-black/60 backdrop-blur-md px-3 py-2 rounded-lg">
+                                <p class="text-white text-xs font-medium">Rotation automatique</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-slate-400 text-sm mt-4 text-center">Modèle 3D créé avec Blender • Format GLB</p>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<!-- INFO PAGE -->
+<div id="page-info" class="page" style="display: none;">
+    <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 glass-nav">
+        <div class="flex size-12 shrink-0 items-center justify-start">
+            <span class="material-symbols-outlined cursor-pointer text-2xl" onclick="navigateToPage('home')">arrow_back_ios</span>
+        </div>
+        <div class="flex flex-col items-center flex-1">
+            <h2 class="text-white text-sm font-semibold tracking-tight">Alexis Grunenwald</h2>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Portfolio</p>
+        </div>
+        <div class="flex w-12 items-center justify-end">
+            <button class="flex items-center justify-center rounded-lg h-10 w-10 bg-white/5 text-white hover:bg-white/10 transition-colors">
+                <span class="material-symbols-outlined text-xl">share</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto pb-20 pt-20">        
+        <header class="relative z-10 px-6 pt-8 pb-4">
+            <h1 class="text-white tracking-tight text-4xl font-bold leading-tight text-left">
+                CONTACT & <br/>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">INFORMATIONS</span>
+            </h1>
+            <p class="text-white/50 text-base font-light leading-relaxed mt-4 max-w-[320px] sm:max-w-[500px]">
+                Tout ce qu’il faut pour me connaître : parcours, outils et contact.
+            </p>
+        </header>
+        
+        <section class="relative z-10 px-4 sm:px-6 mb-10">
+            <div class="flex gap-3 max-w-2xl">
+                <a href="https://www.instagram.com/mister.grunenwald/" target="_blank" rel="noopener noreferrer" 
+                   class="flex-1 glass-card rounded-xl p-5 border border-white/10 hover-lift cursor-pointer">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <defs>
+                                <linearGradient id="instagramGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#FD5949;stop-opacity:1" />
+                                    <stop offset="50%" style="stop-color:#D6249F;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#285AEB;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#instagramGradient)" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" stroke-width="2"/>
+                            <circle cx="18" cy="6" r="1.5" fill="url(#instagramGradient)"/>
+                        </svg>
+                        <p class="text-white/60 text-[10px] uppercase tracking-wider">Instagram</p>
+                    </div>
+                    <p class="text-white text-2xl font-bold tracking-tight">7.4K</p>
+                    <div class="flex items-center gap-1 mt-2 text-[#0bda68]">
+                        <span class="material-symbols-outlined text-xs">trending_up</span>
+                        <span class="text-[11px] font-bold">+15%</span>
+                    </div>
+                </a>
+                
+                <a href="https://www.linkedin.com/in/alexis-grunenwald-b7b9b428a/" target="_blank" rel="noopener noreferrer" 
+                   class="flex-1 glass-card rounded-xl p-5 border border-white/10 hover-lift cursor-pointer">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#0A66C2">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                        <p class="text-white/60 text-[10px] uppercase tracking-wider">LinkedIn</p>
+                    </div>
+                    <p class="text-white text-xl sm:text-2xl font-bold tracking-tight">Voir profil</p>
+                    <div class="flex items-center gap-1 mt-2 text-[#0bda68]">
+                        <span class="material-symbols-outlined text-xs">verified</span>
+                        <span class="text-[11px] font-bold">Profil vérifié</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+        
+        <section class="relative z-10">
+            <div class="flex items-center justify-between px-4 sm:px-6 mb-4">
+                <h3 class="text-xs uppercase tracking-[0.2em] text-white/60 font-medium">CV & compétences</h3>
+                <div class="flex gap-1">
+                    <div id="dot-0" class="w-4 h-1 bg-primary rounded-full transition-all duration-300"></div>
+                    <div id="dot-1" class="w-1 h-1 bg-white/20 rounded-full transition-all duration-300"></div>
+                </div>
+            </div>
+            
+            <div id="cvSkillsScroll" class="flex overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth px-4 sm:px-6 gap-4">
+                <div class="min-w-[75vw] sm:min-w-[400px] max-w-[500px] snap-center relative aspect-[3/4] rounded-2xl overflow-hidden group">
+                    <div class="absolute inset-0 bg-center bg-cover transition-transform duration-700 group-hover:scale-110" 
+                         style='background-image: url("https://epicview.fr/wp-content/uploads/2025/05/Newsletter.jpg");'></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <p class="text-primary text-xs font-bold uppercase tracking-[0.2em] mb-2">Format PDF</p>
+                        <h4 class="text-white text-3xl font-light mb-2">Mon <span class="font-semibold italic">CV</span></h4>
+                        <p class="text-white/60 text-sm font-light leading-snug mb-6 max-w-[280px]">
+                            Un aperçu clair de mon parcours, de mes compétences et de mes expériences clés.
+                        </p>
+                        <button onclick="downloadCV()" 
+                                class="w-full bg-white text-background-dark py-4 rounded-xl font-bold text-sm tracking-tight flex items-center justify-center gap-2 hover:bg-gray-100 active:scale-95 transition-all">
+                            Télécharger le CV
+                            <span class="material-symbols-outlined text-base">download</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="min-w-[75vw] sm:min-w-[400px] max-w-[500px] snap-center relative aspect-[3/4] rounded-2xl overflow-hidden group">
+                    <div class="absolute inset-0 bg-center bg-cover transition-transform duration-700 group-hover:scale-110" 
+                         style='background-image: url("https://epicview.fr/wp-content/uploads/2025/06/entreprise-scaled.jpg");'></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <p class="text-primary text-xs font-bold uppercase tracking-[0.2em] mb-2">Compétences</p>
+                        <h4 class="text-white text-3xl font-light mb-2">Mes <span class="font-semibold italic">logiciels & app</span></h4>
+                        <p class="text-white/60 text-sm font-light leading-snug mb-6 max-w-[280px]">
+                            Mon écosystème de travail : logiciels, apps et plateformes que j'utilise au quotidien.
+                        </p>
+                        <button onclick="openSoftwarePopup()" 
+                                class="w-full bg-white text-background-dark py-4 rounded-xl font-bold text-sm tracking-tight flex items-center justify-center gap-2 hover:bg-gray-100 active:scale-95 transition-all">
+                            Visionner
+                            <span class="material-symbols-outlined text-base">visibility</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="relative z-10 px-4 sm:px-6 pt-10 border-t border-white/5 bg-black/20">
+            <h5 class="text-white text-2xl font-light leading-tight mb-4">Mes coordonnées en un clic ⇲</h5>
+            <div class="flex flex-col gap-3 max-w-1xl">
+                <button onclick="downloadContact()" 
+                        class="w-full bg-primary text-white py-5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-primary/80 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">contact_page</span>
+                    Télécharger le contact
+                </button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Video Popup -->
+<!-- Video Popup -->
+<div id="videoPopup" class="popup-overlay" onclick="closeVideoPopup()">
+    <div class="popup-content w-full h-full flex flex-col justify-center items-center relative" onclick="event.stopPropagation()">
+        <button onclick="closeVideoPopup()" class="absolute top-4 right-4 z-40 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/80 transition-colors">
+            <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+        
+        <div class="relative w-full max-w-7xl max-h-[90vh] flex flex-col items-center justify-center px-4">
+            <h3 id="popupTitle" class="text-white text-lg font-semibold text-center mb-4 bg-black/50 px-4 py-1 rounded-full backdrop-blur-md">Vidéos</h3>
+            
+            <div class="relative w-full flex items-center justify-center">
+                <button onclick="slideVideo(-1)" class="absolute left-0 sm:left-4 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                    <span class="material-symbols-outlined text-3xl">chevron_left</span>
+                </button>
+                
+                <div id="videoSlider" class="video-slider flex overflow-x-auto no-scrollbar scroll-smooth w-full items-center"></div>
+                
+                <button onclick="slideVideo(1)" class="absolute right-0 sm:right-4 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                    <span class="material-symbols-outlined text-3xl">chevron_right</span>
+                </button>
+            </div>
+            
+            <div class="flex items-center justify-center gap-2 mt-6 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full" id="dotsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Gallery Popup -->
+<div id="imagePopup" class="popup-overlay" onclick="closeImageGallery()">
+    <div class="popup-content w-full h-full flex flex-col justify-center items-center relative" onclick="event.stopPropagation()">
+        <button onclick="closeImageGallery()" class="absolute top-4 right-4 z-40 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/80 transition-colors">
+            <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+        
+        <div class="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center px-4">
+            <button onclick="slideGalleryImage(-1)" class="absolute left-4 z-40 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                <span class="material-symbols-outlined text-3xl">chevron_left</span>
+            </button>
+            
+            <div class="relative max-h-[85vh] w-auto">
+                <img id="galleryImage" src="" alt="Gallery Image" class="max-h-[85vh] max-w-full rounded-xl shadow-2xl object-contain">
+                <div id="galleryCounter" class="absolute bottom-4 right-4 bg-black/60 backdrop-blur px-3 py-1 rounded-full text-xs text-white">1/4</div>
+            </div>
+            
+            <button onclick="slideGalleryImage(1)" class="absolute right-4 z-40 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                <span class="material-symbols-outlined text-3xl">chevron_right</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Software Popup -->
+<div id="softwarePopup" class="popup-overlay" onclick="closeSoftwarePopup(event)">
+    <div class="popup-content bg-black border border-white/10 rounded-2xl p-8 max-w-4xl w-[90vw] mx-4" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h3 class="text-white text-2xl sm:text-3xl font-light mb-2">
+                    Mes <span class="font-semibold text-primary">logiciels & outils</span>
+                </h3>
+                <p class="text-white/50 text-sm">L'écosystème qui accompagne mon travail</p>
+            </div>
+            <button onclick="closeSoftwarePopup()" 
+                    class="text-white/60 hover:text-white transition-colors p-2">
+                <span class="material-symbols-outlined text-3xl">close</span>
+            </button>
+        </div>
+        
+        <div class="overflow-hidden relative">
+            <div class="software-track animate-scroll">
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg" class="w-full h-full object-contain" alt="Wordpress"></div><p class="text-white/80 text-xs font-medium">Wordpress</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://logo-teka.com/wp-content/uploads/2025/09/canva-icon-logo.svg" class="w-full h-full object-contain" alt="Canva pro"></div><p class="text-white/80 text-xs font-medium">Canva pro</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/0/0c/Blender_logo_no_text.svg" class="w-full h-full object-contain" alt="Blender"></div><p class="text-white/80 text-xs font-medium">Blender 3D</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" class="w-full h-full object-contain" alt="Meta"></div><p class="text-white/80 text-xs font-medium">Meta</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-xl flex items-center justify-center border border-white/10"><span class="text-white text-xl font-bold">FCP</span></div><p class="text-white/80 text-xs font-medium">Final Cut Pro</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" class="w-full h-full object-contain" alt="Google Antigravity"></div><p class="text-white/80 text-xs font-medium">Antigravity</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://static.cdnlogo.com/logos/c/9/capcut.svg" class="w-full h-full object-contain" alt="CapCut"></div><p class="text-white/80 text-xs font-medium">CapCut</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/90 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg" class="w-full h-full object-contain" alt="IA Générative"></div><p class="text-white/80 text-xs font-medium">IA Générative +</p></div>
+                <!-- Duplicate for seamless loop -->
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg" class="w-full h-full object-contain" alt="Wordpress"></div><p class="text-white/80 text-xs font-medium">Wordpress</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://logo-teka.com/wp-content/uploads/2025/09/canva-icon-logo.svg" class="w-full h-full object-contain" alt="Canva pro"></div><p class="text-white/80 text-xs font-medium">Canva pro</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/0/0c/Blender_logo_no_text.svg" class="w-full h-full object-contain" alt="Blender"></div><p class="text-white/80 text-xs font-medium">Blender</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" class="w-full h-full object-contain" alt="Meta"></div><p class="text-white/80 text-xs font-medium">Meta</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-pink-500 to-red-600 rounded-xl flex items-center justify-center border border-white/10"><span class="text-white text-xl font-bold">FCP</span></div><p class="text-white/80 text-xs font-medium">Final Cut Pro</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" class="w-full h-full object-contain" alt="Google Antigravity"></div><p class="text-white/80 text-xs font-medium">Antigravity</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://static.cdnlogo.com/logos/c/9/capcut.svg" class="w-full h-full object-contain" alt="CapCut"></div><p class="text-white/80 text-xs font-medium">CapCut</p></div>
+                <div class="software-item"><div class="w-16 h-16 mx-auto mb-3 bg-white/90 rounded-xl flex items-center justify-center p-3 border border-white/10"><img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg" class="w-full h-full object-contain" alt="IA Générative"></div><p class="text-white/80 text-xs font-medium">IA Générative +</p></div>
+            </div>
+        </div>
+
+        <!-- Section Matériel -->
+        <div class="mt-12 pt-8 border-t border-white/5">
+            <div class="mb-6">
+                <h3 class="text-white text-xl font-light mb-2">
+                    Mon <span class="font-semibold text-primary">matériel & équipement</span>
+                </h3>
+                <p class="text-white/50 text-sm">Les outils physiques que je maîtrise</p>
+            </div>
+            
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-6">
+                <div class="text-center group">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-white/10 group-hover:border-primary/50">
+                        <span class="material-symbols-outlined text-white text-2xl">devices</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium">Apple</p>
+                    <p class="text-white/40 text-[10px] uppercase tracking-wider">Iphone & MacBook</p>
+                </div>
+                
+                <div class="text-center group">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-white/10 group-hover:border-primary/50">
+                        <span class="material-symbols-outlined text-white text-2xl">smartphone</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium">Samsung</p>
+                    <p class="text-white/40 text-[10px] uppercase tracking-wider">S24 Ultra</p>
+                </div>
+                
+                <div class="text-center group">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-white/10 group-hover:border-primary/50">
+                        <span class="material-symbols-outlined text-white text-2xl">360</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium">Insta 360° X5</p>
+                    <p class="text-white/40 text-[10px] uppercase tracking-wider">Caméra 360°</p>
+                </div>
+                
+                <div class="text-center group">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-white/10 group-hover:border-primary/50">
+                        <span class="material-symbols-outlined text-white text-2xl">movie</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium">DJI Ronin 4D</p>
+                    <p class="text-white/40 text-[10px] uppercase tracking-wider">Cinéma</p>
+                </div>
+                <div class="text-center group">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-white/10 group-hover:border-primary/50">
+                        <span class="material-symbols-outlined text-white text-2xl">helicopter</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium">DJI Mini 4 Pro</p>
+                    <p class="text-white/40 text-[10px] uppercase tracking-wider">Drone</p>
+                </div>
+                <div class="text-center group">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors border border-white/10 group-hover:border-primary/50">
+                        <span class="material-symbols-outlined text-white text-2xl">architecture</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium">Stabilsateur & Rig</p>
+                    <p class="text-white/40 text-[10px] uppercase tracking-wider">DJI & cage équipée</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 right-0 z-50">
+    <div class="flex justify-center items-center gap-24 sm:gap-28 md:gap-36 lg:gap-44 border-t-2 border-primary/40 bg-[#1F1F1F]/95 backdrop-blur-3xl pt-4 pb-5 shadow-[0_-15px_40px_rgba(164,0,0,0.12)]">
+        <div class="bottom-nav-item flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors cursor-pointer" data-page="home">
+            <span class="material-symbols-outlined" style="font-size: 24px;">home</span>
+        </div>
+        <div class="bottom-nav-item flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors cursor-pointer" data-page="portfolio">
+            <span class="material-symbols-outlined" style="font-size: 24px;">grid_view</span>
+        </div>
+        <div class="bottom-nav-item flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors cursor-pointer" data-page="info">
+            <span class="material-symbols-outlined" style="font-size: 24px;">work</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    
+// ============================================
+// NAVIGATION SYSTEM
+// ============================================
+let currentPage = 'home';
+const pages = ['home', 'portfolio', 'info'];
+
+function navigateToPage(targetPage) {
+    if (currentPage === targetPage) return;
+    
+    // Reset scroll position immediately
+    window.scrollTo(0, 0);
+    
+    const currentIndex = pages.indexOf(currentPage);
+    const targetIndex = pages.indexOf(targetPage);
+    
+    const currentPageEl = document.getElementById(`page-${currentPage}`);
+    const targetPageEl = document.getElementById(`page-${targetPage}`);
+    
+    // Determine direction
+    const isMovingRight = targetIndex > currentIndex;
+    
+    // Prepare target page
+    targetPageEl.style.display = 'block'; // Make visible for transition
+    targetPageEl.style.transform = isMovingRight ? 'translateX(100%)' : 'translateX(-100%)';
+    targetPageEl.style.opacity = '0';
+    
+    // Force reflow
+    void targetPageEl.offsetWidth;
+
+    // Exit current page
+    currentPageEl.classList.remove('active');
+    currentPageEl.classList.add(isMovingRight ? 'exit-left' : 'exit-right');
+    
+    // Enter target page
+    targetPageEl.classList.add('active');
+    targetPageEl.style.transform = 'translateX(0)';
+    targetPageEl.style.opacity = '1';
+    
+    // Cleanup
+    setTimeout(() => {
+        currentPageEl.classList.remove('exit-left', 'exit-right');
+        currentPageEl.style.display = 'none'; // Hide after transition
+    }, 500);
+    
+    currentPage = targetPage;
+    updateBottomNav();
+    
+    // Initialize page-specific features
+    if (targetPage === 'portfolio') {
+        // initPortfolioPage is now called once at startup
+    }
+}
+
+function updateBottomNav() {
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        const page = item.dataset.page;
+        if (page === currentPage) {
+            item.classList.add('active');
+            item.classList.remove('text-slate-500');
+            item.classList.add('text-white');
+        } else {
+            item.classList.remove('active');
+            item.classList.remove('text-white');
+            item.classList.add('text-slate-500');
+        }
+    });
+}
+
+// Bottom nav click handlers
+document.querySelectorAll('.bottom-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        navigateToPage(item.dataset.page);
+    });
+});
+
+// ============================================
+// PORTFOLIO PAGE FUNCTIONALITY
+// ============================================
+let isInitialVideoInit = false;
+function initVideoPlayer() {
+    if (isInitialVideoInit) return;
+    
+    const video = document.getElementById('videoEpic');
+    const playButton = document.getElementById('playButton');
+    
+    if (video && playButton) {
+        const togglePlay = () => {
+            if (video.paused) {
+                video.play();
+                playButton.style.display = 'none';
+            } else {
+                video.pause();
+                playButton.style.display = 'flex';
+            }
+        };
+
+        playButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePlay();
+        });
+
+        video.addEventListener('click', togglePlay);
+        
+        video.addEventListener('ended', () => {
+            playButton.style.display = 'flex';
+        });
+    }
+    isInitialVideoInit = true;
+}
+
+let isInitialPortfolioInit = false;
+function initPortfolioPage() {
+    if (isInitialPortfolioInit) return;
+    
+    // Video player
+    initVideoPlayer();
+    
+    // Category switching
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            const category = this.dataset.category;
+            
+            const oldContent = document.querySelector('.category-content.active');
+            const newContent = document.getElementById(category + '-content');
+            
+            // Handle old content
+            if (oldContent && oldContent !== newContent) {
+                oldContent.classList.remove('active');
+                setTimeout(() => {
+                    oldContent.style.display = 'none';
+                }, 600); // 600ms matches CSS transition
+            }
+            
+            // Update chips
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show new content
+            setTimeout(() => {
+                newContent.style.display = 'block';
+                // Force reflow
+                void newContent.offsetWidth;
+                newContent.classList.add('active');
+                
+                if (category === '3d' && !isInit3d) {
+                    setTimeout(() => {
+                        init3DModel();
+                    }, 500);
+                }
+            }, 150);
+        });
+    });
+    isInitialPortfolioInit = true;
+}
+
+// ============================================
+// VIDEO POPUP
+// ============================================
+const videos = {
+    portrait: ['https://drive.google.com/file/d/1x-miXu6033TNri8M0M5ORV0pKPBnz4Z4/preview',
+            'https://drive.google.com/file/d/1kHpxdBwco8DbBDRR7IWh7wnqjO3849XZ/preview',
+            'https://drive.google.com/file/d/1pTX0e30f2dcW_0Kd3Y0Ixq1RIQsJ14AT/preview',
+            'https://drive.google.com/file/d/1WIBF2kkzANFIXjKprHhX893w50s7LXes/preview',
+            'https://drive.google.com/file/d/1q4NN21zb0vxVbwMCmt-TKVaPZLgHJrKS/preview',
+            'https://drive.google.com/file/d/1IwFtH_a6R3Kzg12xjbQmG8x_gULO_6C8/preview',
+            'https://drive.google.com/file/d/14tbNpJ3s9Xuj6OWJilVydf9WuOgYFtfD/preview',
+            'https://drive.google.com/file/d/1vd7z_PSjJZ5AJiz9I1McTXd0OjQj90xz/preview',
+            'https://drive.google.com/file/d/13ITk5AxAmFnHh-bsHEOOG6-g6QFA93t1/preview',
+            'https://drive.google.com/file/d/1VWDb6eLWYFuL2LBwaOArajLFn76cBy1P/preview',
+            'https://drive.google.com/file/d/1yXWQwp6xzVUb7hlTPA6x3ntiMz455H0r/preview',
+            'https://drive.google.com/file/d/1ypK4bUNZD9f7e4naqnoyh9bS1ypcix8U/preview',
+            'https://drive.google.com/file/d/195VWMKgxsDu5F9T0FejqXf4Mi_aWBZFu/preview',
+            'https://drive.google.com/file/d/1KCJGx1nzXjq5wM2OW4V96OM1E3v_Mhh-/preview',
+            'https://drive.google.com/file/d/1PsA5_aUDyx7XY9Kp_LJ9e5Fco6LUTiGk/preview',
+            'https://drive.google.com/file/d/1t2udIInkHsnNKFxVvOWGq6w6WJigVoNG/preview'],
+    
+    paysage: ['https://drive.google.com/file/d/1W3sJYdhEA9uq5eNvzNw_32Ifrihg58tQ/preview',
+            'https://drive.google.com/file/d/1IQm_P-zJnmTm9X5WiLaIpYX0UXM4Z_9x/preview',
+            'https://drive.google.com/file/d/1JSnzIYPHv9z6Cx0cwJ8Hx71W9zEazJpz/preview',
+            'https://drive.google.com/file/d/1rmgyAJG_FCUlXVV1eFUMChSL5DzbEOqq/preview',
+            'https://drive.google.com/file/d/1rmgyAJG_FCUlXVV1eFUMChSL5DzbEOqq/preview']
+};
+
+let currentFormat = 'portrait';
+let currentSlide = 0;
+
+function openVideoPopup(format) {
+    currentFormat = format;
+    currentSlide = 0;
+    const popup = document.getElementById('videoPopup');
+    const title = document.getElementById('popupTitle');
+    const slider = document.getElementById('videoSlider');
+    const dotsContainer = document.getElementById('dotsContainer');
+    
+    title.textContent = format === 'portrait' ? 'Format Portrait' : 'Format Paysage';
+    
+    slider.innerHTML = '';
+    dotsContainer.innerHTML = '';
+    
+    videos[format].forEach((videoUrl, index) => {
+        const videoDiv = document.createElement('div');
+        videoDiv.className = 'video-slide min-w-full flex items-center justify-center bg-transparent py-2 px-12 sm:px-16 relative min-h-[50vh]'; 
+        
+        let style = '';
+        if (format === 'portrait') {
+            style = 'width: auto; height: 75vh; max-height: 800px; aspect-ratio: 9/16; max-width: calc(75vh * 9/16);';
+        } else {
+            style = 'width: 85vw; max-width: 900px; height: auto; aspect-ratio: 16/9; max-height: 70vh;';
+        }
+
+        videoDiv.innerHTML = `
+            <div class="spinner-container absolute inset-0 flex items-center justify-center z-0">
+                <div class="spinner"></div>
+            </div>
+            <iframe class="rounded-xl shadow-2xl relative z-10 opacity-0 transition-opacity duration-300" 
+                    style="${style}" 
+                    data-src="${videoUrl}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+            </iframe>
+        `;
+        
+        slider.appendChild(videoDiv);
+        
+        const dot = document.createElement('div');
+        dot.className = `w-2 h-2 rounded-full transition-all cursor-pointer ${index === 0 ? 'bg-primary w-6' : 'bg-white/30'}`;
+        dot.onclick = () => goToSlide(index);
+        dotsContainer.appendChild(dot);
+    });
+    
+    popup.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Reset scroll position and load first video
+    slider.scrollLeft = 0;
+    manageVideoSlides();
+}
+
+function manageVideoSlides() {
+    const slides = document.querySelectorAll('.video-slide');
+    if (!slides.length) return;
+
+    slides.forEach((slide, index) => {
+        const iframe = slide.querySelector('iframe');
+        const spinner = slide.querySelector('.spinner-container');
+        const targetUrl = iframe.getAttribute('data-src');
+
+        if (index === currentSlide) {
+            // Load and play current
+            if (!iframe.src || iframe.src !== targetUrl) {
+                iframe.src = targetUrl;
+                iframe.onload = () => {
+                    iframe.classList.add('opacity-100');
+                    if (spinner) spinner.style.display = 'none';
+                };
+            } else {
+                iframe.classList.add('opacity-100');
+                if (spinner) spinner.style.display = 'none';
+            }
+        } else {
+            // Stop and hide others
+            iframe.src = '';
+            iframe.classList.remove('opacity-100');
+            if (spinner) spinner.style.display = 'flex';
+        }
+    });
+}
+
+function closeVideoPopup() {
+    const slider = document.getElementById('videoSlider');
+    // Stop all videos before closing
+    const iframes = slider.querySelectorAll('iframe');
+    iframes.forEach(iframe => iframe.src = '');
+    
+    const popup = document.getElementById('videoPopup');
+    popup.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function slideVideo(direction) {
+    const slider = document.getElementById('videoSlider');
+    const totalSlides = videos[currentFormat].length;
+    currentSlide += direction;
+    if (currentSlide < 0) currentSlide = 0;
+    if (currentSlide >= totalSlides) currentSlide = totalSlides - 1;
+    
+    slider.scrollTo({
+        left: slider.offsetWidth * currentSlide,
+        behavior: 'smooth'
+    });
+    updateDots();
+    manageVideoSlides();
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    const slider = document.getElementById('videoSlider');
+    slider.scrollTo({
+        left: slider.offsetWidth * currentSlide,
+        behavior: 'smooth'
+    });
+    updateDots();
+    manageVideoSlides();
+}
+
+function updateDots() {
+    const dots = document.querySelectorAll('#dotsContainer > div');
+    dots.forEach((dot, index) => {
+        if (index === currentSlide) {
+            dot.className = 'w-6 h-2 rounded-full bg-primary transition-all cursor-pointer';
+        } else {
+            dot.className = 'w-2 h-2 rounded-full bg-white/30 transition-all cursor-pointer';
+        }
+    });
+}
+
+// ============================================
+// SCROLLYTELLING LOGIC
+// ============================================
+const scrollytelling = {
+    canvas: null,
+    ctx: null,
+    images: [],
+    frameCount: 81, // 40 to 120
+    startFrame: 40,
+    loadedCount: 0,
+    currentFrameIndex: 0,
+    targetProgress: 0,
+    currentProgress: 0,
+    isInitialized: false,
+
+    async init() {
+        if (this.isInitialized) return;
+        
+        this.canvas = document.getElementById('scrolly-canvas');
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        
+        const loader = document.getElementById('scrolly-loader');
+        const loaderText = document.getElementById('loader-text');
+        const progressBar = document.getElementById('scrolly-progress-bar');
+
+        // Preload
+        const preload = () => {
+            return new Promise((resolve) => {
+                for (let i = 0; i < this.frameCount; i++) {
+                    const img = new Image();
+                    const paddedIndex = String(this.startFrame + i).padStart(5, '0');
+                    img.src = `./images/${paddedIndex}.png`;
+                    img.onload = () => {
+                        this.loadedCount++;
+                        const progress = Math.floor((this.loadedCount / this.frameCount) * 100);
+                        if (loaderText) loaderText.innerText = `Loading sequence... ${progress}%`;
+                        if (this.loadedCount === this.frameCount) {
+                            if (loader) {
+                                loader.style.opacity = '0';
+                                setTimeout(() => loader.style.display = 'none', 1000);
+                            }
+                            resolve();
+                        }
+                    };
+                    img.onerror = () => {
+                        this.loadedCount++;
+                        if (this.loadedCount === this.frameCount) resolve();
+                    };
+                    this.images.push(img);
+                }
+            });
+        };
+
+        await preload();
+        
+        window.addEventListener('resize', () => this.resize());
+        this.resize();
+
+        // Scroll listener using Motion (which is already loaded globally)
+        if (window.Motion) {
+            const { scroll } = window.Motion;
+            scroll((progress) => {
+                this.targetProgress = progress;
+                if (progressBar) progressBar.style.width = `${progress * 100}%`;
+                this.updateBeats(progress);
+            });
+        }
+
+        this.animate();
+        this.isInitialized = true;
+    },
+
+    resize() {
+        if (!this.canvas) return;
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.canvas.style.width = window.innerWidth + 'px';
+        this.canvas.style.height = window.innerHeight + 'px';
+        this.ctx.scale(dpr, dpr);
+        this.renderFrame(this.currentFrameIndex);
+    },
+
+    renderFrame(index) {
+    const img = this.images[index];
+    if (!img || !img.complete) return;
+
+    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    const canvasWidth = window.innerWidth;
+    const canvasHeight = window.innerHeight;
+    const imgWidth = img.width;
+    const imgHeight = img.height;
+    
+    const ratio = Math.max(canvasWidth / imgWidth, canvasHeight / imgHeight); // Changé de min à max
+    const newWidth = imgWidth * ratio;
+    const newHeight = imgHeight * ratio;
+    const x = (canvasWidth - newWidth) / 2;
+    const y = 0; // Changé de (canvasHeight - newHeight) / 2 à 0 pour coller en haut
+
+    this.ctx.drawImage(img, x, y, newWidth, newHeight);
+    
+    // Subtle overlay
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    this.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+},
+
+    updateBeats(progress) {
+        const beats = [
+            { id: 'beat-0', min: 0, max: 0.15 },
+            { id: 'beat-25', min: 0.25, max: 0.45 },
+            { id: 'beat-60', min: 0.55, max: 0.75 },
+            { id: 'beat-90', min: 0.85, max: 1.0 }
+        ];
+
+        beats.forEach(beat => {
+            const el = document.getElementById(beat.id);
+            if (el) {
+                if (progress >= beat.min && progress <= beat.max) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            }
+        });
+    },
+
+    animate() {
+        // Smoothing (Lerp)
+        this.currentProgress += (this.targetProgress - this.currentProgress) * 0.15;
+        
+        const frameIndex = Math.min(
+            this.frameCount - 1,
+            Math.floor(this.currentProgress * this.frameCount)
+        );
+
+        if (frameIndex !== this.currentFrameIndex) {
+            this.currentFrameIndex = frameIndex;
+            this.renderFrame(this.currentFrameIndex);
+        }
+        
+        requestAnimationFrame(() => this.animate());
+    }
+};
+
+// ============================================
+// IMAGE GALLERY
+// ============================================
+const postsData = [
+    'https://i.imgur.com/xR8pPZI.jpeg',
+    'https://i.imgur.com/iJUeP8k.jpeg',
+    'https://i.imgur.com/3CbthiI.jpeg',
+    'https://i.imgur.com/b1k1Y2O.jpeg'
+];
+
+const storiesData = [
+    ['https://i.imgur.com/Wcfkawe.jpeg', 'https://i.imgur.com/6bM57XT.jpeg', 'https://i.imgur.com/ou2TDA7.jpeg', 'https://i.imgur.com/PhNXH0o.jpeg'],
+    ['https://i.imgur.com/zt6PvAT.jpeg'],
+    ['https://i.imgur.com/KaQN2sn.jpeg'],
+    ['https://i.imgur.com/XJGUVpF.jpeg'],
+    ['https://i.imgur.com/qHbFTo0.jpeg'],
+    ['https://i.imgur.com/zHG8RYG.jpeg'],
+    ['https://i.imgur.com/AiTWZcu.jpeg'],
+    ['https://i.imgur.com/ruYYYG4.jpeg']
+];
+
+let currentGalleryImages = [];
+let currentGalleryIndex = 0;
+
+function openImageGallery(type, index) {
+    if (type === 'posts') {
+        currentGalleryImages = postsData;
+        currentGalleryIndex = index;
+    } else if (type === 'stories') {
+        // Flatten stories for gallery navigation? Or just show single story content? 
+        // User asked for "Posts and Stories" lightbox.
+        // For the carousel story (index 0), lets just show the first image of it, or better, flatten all story images?
+        // Let's keep it simple: if it's the carousel (index 0), load its array. If single image, wrap in array.
+        
+        if (Array.isArray(storiesData[index])) {
+            currentGalleryImages = storiesData[index];
+            currentGalleryIndex = 0; // Start at first image of this story
+        } else {
+            // It's just a grouping of all stories?
+            // "implement a full-screen image gallery for Posts and Stories"
+            // Let's flatten everything for 'stories' navigation flow essentially?
+            // Actually, usually user expects to click a story and see THAT story. 
+            // Since the carousel has 4 images, let's allow navigating through THOSE 4 images if clicked?
+            // Or navigating through ALL story thumbnails?
+            // "clic dessus je voudrait qu'elles s'affichent avec deux flèches sur les coté pour naviguer"
+            // Interpretation: Navigate between the items in the list.
+            
+            // Re-evaluating: The carousel story is one item. The others are single items.
+            // Let's build a flat list of "Main Images" for the gallery to correspond to the thumbnails.
+            // But wait, the carousel story actually has 4 images inside.
+            // Let's treat the carousel story as a special case?
+            
+            // Simpler approach that usually works best: 
+            // When clicking a thumbnail, open a gallery containing ALL images from that section.
+            // For the carousel, we should probably include all 4 images.
+            
+            // Let's flatten:
+            // Index 0 is 4 images. Index 1 is 1 image.
+            // If I click index 0, I want to see those 4 images.
+            // If I click index 1, I want to see index 1, then next is index 2...
+            
+            // Let's Construct a flat list for the gallery mode
+             currentGalleryImages = storiesData.flat();
+            
+            // We need to find the correct starting index in the flattened list
+             let flatIndex = 0;
+             for(let i=0; i<index; i++) {
+                 flatIndex += storiesData[i].length;
+             }
+             currentGalleryIndex = flatIndex;
+        }
+    }
+    
+    updateGalleryImage();
+    const popup = document.getElementById('imagePopup');
+    popup.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageGallery() {
+    const popup = document.getElementById('imagePopup');
+    popup.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function slideGalleryImage(direction) {
+    currentGalleryIndex += direction;
+    if (currentGalleryIndex < 0) currentGalleryIndex = currentGalleryImages.length - 1;
+    if (currentGalleryIndex >= currentGalleryImages.length) currentGalleryIndex = 0;
+    
+    updateGalleryImage();
+}
+
+function updateGalleryImage() {
+    const imgId = document.getElementById('galleryImage');
+    const counter = document.getElementById('galleryCounter');
+    
+    // Add fade effect
+    imgId.style.opacity = '0';
+    setTimeout(() => {
+        imgId.src = currentGalleryImages[currentGalleryIndex];
+        imgId.onload = () => { imgId.style.opacity = '1'; };
+    }, 200);
+    
+    counter.textContent = `${currentGalleryIndex + 1}/${currentGalleryImages.length}`;
+}
+
+// ============================================
+// 3D MODEL
+// ============================================
+let scene3d, camera3d, renderer3d, model3d, animationId;
+let isInit3d = false;
+
+function init3DModel() {
+    if (isInit3d) return;
+    
+    const canvas = document.getElementById('canvas3d');
+    if (!canvas) return;
+    
+    const canvasRect = canvas.getBoundingClientRect();
+    if (canvasRect.width === 0 || canvasRect.height === 0) return;
+    
+    scene3d = new THREE.Scene();
+    scene3d.background = new THREE.Color(0x0a0a15);
+    
+    camera3d = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+    camera3d.position.set(0, 2, 8);
+    camera3d.lookAt(0, 0, 0);
+    
+    renderer3d = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    renderer3d.setSize(canvasRect.width, canvasRect.height);
+    renderer3d.setPixelRatio(window.devicePixelRatio);
+    renderer3d.shadowMap.enabled = true;
+    renderer3d.outputEncoding = THREE.sRGBEncoding;
+    
+    // Improved Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene3d.add(ambientLight);
+    
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+    scene3d.add(hemiLight);
+    
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+    mainLight.position.set(5, 10, 7);
+    mainLight.castShadow = true;
+    scene3d.add(mainLight);
+    
+    const pointLight1 = new THREE.PointLight(0xa40000, 2, 50);
+    pointLight1.position.set(-5, 3, 5);
+    scene3d.add(pointLight1);
+    
+    const pointLight2 = new THREE.PointLight(0x4444ff, 1, 50);
+    pointLight2.position.set(5, -3, -5);
+    scene3d.add(pointLight2);
+    
+    const tempGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const tempMaterial = new THREE.MeshStandardMaterial({ color: 0xa40000 });
+    const tempCube = new THREE.Mesh(tempGeometry, tempMaterial);
+    scene3d.add(tempCube);
+    
+    function animate() {
+        animationId = requestAnimationFrame(animate);
+        if (model3d) {
+            model3d.rotation.y += 0.005;
+        } else if (tempCube) {
+            tempCube.rotation.x += 0.01;
+            tempCube.rotation.y += 0.01;
+        }
+        renderer3d.render(scene3d, camera3d);
+    }
+    animate();
+    
+    // DRIAC DECODER CONFIG
+    const dracoLoader = new THREE.DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    
+    const loader = new THREE.GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
+    
+    const modelUrl = "https://epicview.fr/wp-content/uploads/2025/11/SupportNFC-Epic.glb"; // Ajout de ./ pour assurer la lecture relative
+    const fallbackUrl = "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
+
+    function loadModel(url, isFallback = false) {
+        loader.load(
+            url,
+            function(gltf) {
+                console.log(isFallback ? "Demo model loaded successfully" : "3D model loaded successfully");
+                if (tempCube) scene3d.remove(tempCube);
+                
+                model3d = gltf.scene;
+                
+                // Auto centering & scaling
+                const box = new THREE.Box3().setFromObject(model3d);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                
+                model3d.position.x += (model3d.position.x - center.x);
+                model3d.position.y += (model3d.position.y - center.y);
+                model3d.position.z += (model3d.position.z - center.z);
+                
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const targetScale = isFallback ? 2.5 : 4.5;
+                const scale = targetScale / maxDim;
+                model3d.scale.setScalar(scale);
+                
+                scene3d.add(model3d);
+            },
+            function(xhr) {
+                if (xhr.total > 0) console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function(error) {
+                if (!isFallback) {
+                    console.warn("Local model not found or CORS error, trying demo fallback...");
+                    loadModel(fallbackUrl, true);
+                } else {
+                    console.error("Critical 3D error:", error);
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'absolute inset-0 flex items-center justify-center text-red-500 text-xs text-center p-4 bg-black/60';
+                    errorMessage.innerHTML = 'Erreur de chargement du modèle 3D.<br/>Vérifiez votre connexion.';
+                    canvas.parentElement.appendChild(errorMessage);
+                }
+            }
+        );
+    }
+
+    loadModel(modelUrl);
+    
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            const width = entry.contentRect.width;
+            const height = entry.contentRect.height;
+            if (width > 0 && height > 0) {
+                camera3d.aspect = width / height;
+                camera3d.updateProjectionMatrix();
+                renderer3d.setSize(width, height);
+            }
+        }
+    });
+    resizeObserver.observe(canvas);
+    
+    isInit3d = true;
+}
+
+// ============================================
+// INFO PAGE FUNCTIONS
+// ============================================
+function downloadCV() {
+    const cvUrl = 'https://votre-site.com/chemin/vers/votre-cv.pdf';
+    const link = document.createElement('a');
+    link.href = cvUrl;
+    link.download = 'CV_Alexis_Grunenwald.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function openSoftwarePopup() {
+    const popup = document.getElementById('softwarePopup');
+    popup.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSoftwarePopup(event) {
+    if (event && event.target !== event.currentTarget) return;
+    const popup = document.getElementById('softwarePopup');
+    popup.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function downloadContact() {
+    const link = document.createElement('a');
+    link.href = 'AlexisGrunenwald.vcf';
+    link.download = 'AlexisGrunenwald.vcf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function initScrollIndicators() {
+    const scrollContainer = document.getElementById('cvSkillsScroll');
+    if (!scrollContainer) return;
+    
+    const dots = [
+        document.getElementById('dot-0'),
+        document.getElementById('dot-1')
+    ];
+    
+    scrollContainer.addEventListener('scroll', () => {
+        const scrollLeft = scrollContainer.scrollLeft;
+        const itemWidth = scrollContainer.querySelector('div').offsetWidth;
+        const activeIndex = Math.round(scrollLeft / itemWidth);
+        
+        dots.forEach((dot, index) => {
+            if (index === activeIndex) {
+                dot.classList.remove('w-1', 'bg-white/20');
+                dot.classList.add('w-4', 'bg-primary');
+            } else {
+                dot.classList.remove('w-4', 'bg-primary');
+                dot.classList.add('w-1', 'bg-white/20');
+            }
+        });
+    });
+}
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeVideoPopup();
+        closeSoftwarePopup();
+        closeImageGallery();
+    }
+});
+
+// ============================================
+// INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Reset scroll position on load
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+    
+    updateBottomNav();
+    initPortfolioPage();
+    initScrollIndicators();
+    scrollytelling.init();
+});
+</script>
+
+</body>
+</html>
