@@ -1838,32 +1838,41 @@ function init3DModel() {
     function loadModel(url, isFallback = false) {
         loader.load(
             url,
-            function (gltf) {
-                if (tempCube) scene3d.remove(tempCube);
-                model3d = gltf.scene;
+            if (tempCube) scene3d.remove(tempCube);
 
-// 📦 Calcul bounding box
+model3d = gltf.scene;
+scene3d.add(model3d);
+
+// 📦 Bounding box initiale
 const box = new THREE.Box3().setFromObject(model3d);
 const size = box.getSize(new THREE.Vector3());
 const center = box.getCenter(new THREE.Vector3());
 
-// 🎯 Recentrer le modèle
+// 🎯 Recentrage
 model3d.position.sub(center);
 
-// 🔍 Calcul de la plus grande dimension
+// 🔍 Dimension max
 const maxDim = Math.max(size.x, size.y, size.z);
 
-// 🎚️ SCALE AUTO (AUGMENTÉ)
-const desiredSize = 10; // 🔥 augmente cette valeur si encore trop petit
-const scale = desiredSize / maxDim;
+// 🎚️ Scale forcé (gros)
+const scale = 8 / maxDim;
 model3d.scale.setScalar(scale);
 
-// 📷 Repositionner la caméra en fonction de la taille
-const distance = maxDim * 2.2;
-camera3d.position.set(0, maxDim * 0.6, distance);
-camera3d.lookAt(0, 0, 0);
+// 🔁 Recalcul box APRÈS scale
+const boxScaled = new THREE.Box3().setFromObject(model3d);
+const sizeScaled = boxScaled.getSize(new THREE.Vector3());
+const maxDimScaled = Math.max(sizeScaled.x, sizeScaled.y, sizeScaled.z);
 
-scene3d.add(model3d);
+// 📷 Camera auto-fit
+const fov = camera3d.fov * (Math.PI / 180);
+let cameraZ = Math.abs(maxDimScaled / 2 / Math.tan(fov / 2));
+cameraZ *= 2.2;
+
+camera3d.position.set(0, maxDimScaled * 0.4, cameraZ);
+camera3d.near = cameraZ / 100;
+camera3d.far = cameraZ * 100;
+camera3d.updateProjectionMatrix();
+camera3d.lookAt(0, 0, 0);
 
             },
             undefined,
