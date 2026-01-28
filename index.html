@@ -1322,7 +1322,7 @@ function initPortfolioPage() {
                 oldContent.classList.remove('active');
                 setTimeout(() => {
                     oldContent.style.display = 'none';
-                }, 600); // 600ms matches CSS transition
+                }, 600);
             }
             
             // Update chips
@@ -1332,20 +1332,21 @@ function initPortfolioPage() {
             // Show new content
             setTimeout(() => {
                 newContent.style.display = 'block';
-                // Force reflow
                 void newContent.offsetWidth;
                 newContent.classList.add('active');
                 
-                if (category === '3d' && !isInit3d) {
+                if (category === '3d') {
+                    console.log('🎯 3D tab clicked, isInit3d:', isInit3d); // ✅ Debug
                     setTimeout(() => {
                         init3DModel();
-                    }, 500);
+                    }, 800); // ✅ Délai augmenté
                 }
             }, 150);
         });
     });
+    
     isInitialPortfolioInit = true;
-}
+} // ✅ Fermeture de la fonction
 
 // ============================================
 // VIDEO POPUP
