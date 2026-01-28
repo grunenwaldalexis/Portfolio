@@ -1842,22 +1842,29 @@ function init3DModel() {
                 if (tempCube) scene3d.remove(tempCube);
                 model3d = gltf.scene;
 
-                const box = new THREE.Box3().setFromObject(model3d);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
+// 📦 Calcul bounding box
+const box = new THREE.Box3().setFromObject(model3d);
+const size = box.getSize(new THREE.Vector3());
+const center = box.getCenter(new THREE.Vector3());
 
-                model3d.position.sub(center);
+// 🎯 Recentrer le modèle
+model3d.position.sub(center);
 
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const targetScale = isFallback ? 2.5 : 4.5;
-                const scale = targetScale / maxDim;
-                model3d.scale.setScalar(scale);
+// 🔍 Calcul de la plus grande dimension
+const maxDim = Math.max(size.x, size.y, size.z);
 
-                const distance = maxDim * 1.8;
-                camera3d.position.set(0, maxDim * 0.6, distance);
-                camera3d.lookAt(0, 0, 0);
+// 🎚️ SCALE AUTO (AUGMENTÉ)
+const desiredSize = 6; // 🔥 augmente cette valeur si encore trop petit
+const scale = desiredSize / maxDim;
+model3d.scale.setScalar(scale);
 
-                scene3d.add(model3d);
+// 📷 Repositionner la caméra en fonction de la taille
+const distance = maxDim * 2.2;
+camera3d.position.set(0, maxDim * 0.6, distance);
+camera3d.lookAt(0, 0, 0);
+
+scene3d.add(model3d);
+
             },
             undefined,
             function (error) {
