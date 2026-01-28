@@ -1777,6 +1777,7 @@ function init3DModel() {
     const canvasRect = canvas.getBoundingClientRect();
     if (canvasRect.width === 0 || canvasRect.height === 0) return;
 
+    // === Scene & Camera ===
     scene3d = new THREE.Scene();
     scene3d.background = new THREE.Color(0x0a0a15);
 
@@ -1787,13 +1788,14 @@ function init3DModel() {
         1000
     );
 
+    // === Renderer ===
     renderer3d = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
-    renderer3d.setSize(canvasRect.width, canvasRect.height);
     renderer3d.setPixelRatio(window.devicePixelRatio);
+    renderer3d.setSize(canvasRect.width, canvasRect.height, false);
     renderer3d.shadowMap.enabled = true;
     renderer3d.outputEncoding = THREE.sRGBEncoding;
 
-    // Lights
+    // === Lights ===
     scene3d.add(new THREE.AmbientLight(0xffffff, 0.5));
     scene3d.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.0));
 
@@ -1810,13 +1812,14 @@ function init3DModel() {
     pointLight2.position.set(5, -3, -5);
     scene3d.add(pointLight2);
 
-    // Temp cube while loading
+    // === Temp cube while loading ===
     const tempCube = new THREE.Mesh(
         new THREE.BoxGeometry(1, 1, 1),
         new THREE.MeshStandardMaterial({ color: 0xa40000 })
     );
     scene3d.add(tempCube);
 
+    // === Animation loop ===
     function animate() {
         animationId = requestAnimationFrame(animate);
         if (model3d) model3d.rotation.y += 0.005;
@@ -1825,10 +1828,11 @@ function init3DModel() {
     }
     animate();
 
-    // DRACO
+    // === DRACO Loader ===
     const dracoLoader = new THREE.DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
 
+    // === GLTF Loader ===
     const loader = new THREE.GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
 
@@ -1838,42 +1842,44 @@ function init3DModel() {
     function loadModel(url, isFallback = false) {
         loader.load(
             url,
-            if (tempCube) scene3d.remove(tempCube);
+            function (gltf) {
+                if (tempCube) scene3d.remove(tempCube);
 
-model3d = gltf.scene;
-scene3d.add(model3d);
+                model3d = gltf.scene;
+                scene3d.add(model3d);
 
-// 📦 Bounding box initiale
-const box = new THREE.Box3().setFromObject(model3d);
-const size = box.getSize(new THREE.Vector3());
-const center = box.getCenter(new THREE.Vector3());
+                // 📦 Bounding box initiale
+                const box = new THREE.Box3().setFromObject(model3d);
+                const size = box.getSize(new THREE.Vector3());
+                const center = box.getCenter(new THREE.Vector3());
 
-// 🎯 Recentrage
-model3d.position.sub(center);
+                // 🎯 Recentrage
+                model3d.position.sub(center);
 
-// 🔍 Dimension max
-const maxDim = Math.max(size.x, size.y, size.z);
+                // 🔍 Dimension max
+                const maxDim = Math.max(size.x, size.y, size.z);
 
-// 🎚️ Scale forcé (gros)
-const scale = 8 / maxDim;
-model3d.scale.setScalar(scale);
+                // 🎚️ Scale forcé
+                const scale = 8 / maxDim;
+                model3d.scale.setScalar(scale);
 
-// 🔁 Recalcul box APRÈS scale
-const boxScaled = new THREE.Box3().setFromObject(model3d);
-const sizeScaled = boxScaled.getSize(new THREE.Vector3());
-const maxDimScaled = Math.max(sizeScaled.x, sizeScaled.y, sizeScaled.z);
+                // 🔁 Recalcul box après scale
+                const boxScaled = new THREE.Box3().setFromObject(model3d);
+                const sizeScaled = boxScaled.getSize(new THREE.Vector3());
+                const maxDimScaled = Math.max(sizeScaled.x, sizeScaled.y, sizeScaled.z);
 
-// 📷 Camera auto-fit
-const fov = camera3d.fov * (Math.PI / 180);
-let cameraZ = Math.abs(maxDimScaled / 2 / Math.tan(fov / 2));
-cameraZ *= 2.2;
+                // 📷 Camera auto-fit
+                const fov = camera3d.fov * (Math.PI / 180);
+                let cameraZ = Math.abs((maxDimScaled / 2) / Math.tan(fov / 2));
+                cameraZ *= 2.2;
 
-camera3d.position.set(0, maxDimScaled * 0.4, cameraZ);
-camera3d.near = cameraZ / 100;
-camera3d.far = cameraZ * 100;
-camera3d.updateProjectionMatrix();
-camera3d.lookAt(0, 0, 0);
+                camera3d.position.set(0, maxDimScaled * 0.4, cameraZ);
+                camera3d.near = cameraZ / 100;
+                camera3d.far = cameraZ * 100;
+                camera3d.updateProjectionMatrix();
+                camera3d.lookAt(0, 0, 0);
 
+                console.log(isFallback ? "Fallback model loaded" : "3D model loaded");
             },
             undefined,
             function (error) {
@@ -1885,18 +1891,18 @@ camera3d.lookAt(0, 0, 0);
 
     loadModel(modelUrl);
 
-    const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
-            const width = entry.contentRect.width;
-            const height = entry.contentRect.height;
-            if (width > 0 && height > 0) {
-                camera3d.aspect = width / height;
-                camera3d.updateProjectionMatrix();
-                renderer3d.setSize(width, height);
-            }
-        }
-    });
-    resizeObserver.observe(canvas);
+    // === Resize observer ===
+    function onResize() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+
+        camera3d.aspect = width / height;
+        camera3d.updateProjectionMatrix();
+        renderer3d.setSize(width, height, false);
+    }
+
+    window.addEventListener('resize', onResize);
+    onResize();
 
     isInit3d = true;
 }
